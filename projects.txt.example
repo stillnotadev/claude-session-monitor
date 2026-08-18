@@ -1,0 +1,10 @@
+# Claude session launcher — project list
+#
+# One project per line: Name | /absolute/path/to/local/checkout
+# Lines starting with # are ignored.
+#
+# Save this file as: ~/.config/claude-sessions/projects.txt
+
+Checkout API | /Users/achint/code/checkout-api
+Marketing site | /Users/achint/code/marketing-site
+Internal dashboard | /Users/achint/code/internal-dashboard
