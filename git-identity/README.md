@@ -32,11 +32,11 @@ account happens to be.
 ## Setup
 
 1. Copy the account file(s) you need into your home directory. One
-   confirmed example is included — `claude-session-monitor` already
+   confirmed example is included — `headroom` already
    pushes as `achint-gupta-tech`, so this repo's config is known-correct:
 
    ```
-   cp ~/Developer/claude-session-monitor/git-identity/.gitconfig-achint-gupta-tech.example ~/.gitconfig-achint-gupta-tech
+   cp ~/Developer/headroom/git-identity/.gitconfig-achint-gupta-tech.example ~/.gitconfig-achint-gupta-tech
    ```
 
    Edit that file and fill in the real email address for that account
@@ -63,7 +63,7 @@ account happens to be.
 
 4. Test it without pushing anything:
    ```
-   cd ~/Developer/claude-session-monitor
+   cd ~/Developer/headroom
    git config user.email
    git config credential.https://github.com.username
    ```

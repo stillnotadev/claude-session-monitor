@@ -10,7 +10,7 @@ enum QuickActions {
 
     static func openGitIdentityFolder() {
         let path = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Developer/claude-session-monitor/git-identity")
+            .appendingPathComponent("Developer/headroom/git-identity")
         NSWorkspace.shared.open(path)
     }
 

@@ -16,7 +16,7 @@ handle another local session right now.
 
 **From Terminal** (fastest, no Xcode UI needed):
 ```
-cd ~/Developer/claude-session-monitor/native-app
+cd ~/Developer/headroom/native-app
 swift run
 ```
 First build takes a minute or two; subsequent runs are fast. Leave the
@@ -25,7 +25,7 @@ snappier build once you're happy with it.
 
 **From Xcode:**
 ```
-open ~/Developer/claude-session-monitor/native-app/Package.swift
+open ~/Developer/headroom/native-app/Package.swift
 ```
 Xcode opens it as a Swift Package. Pick the `Headroom` scheme and hit Run
 (⌘R).
@@ -41,8 +41,8 @@ Xcode opens it as a Swift Package. Pick the `Headroom` scheme and hit Run
   factor(s) are driving it (e.g. "memory low, battery low").
 - A native notification when things escalate (Normal → Warning →
   Critical), so you find out even if the menu bar isn't visible.
-- Quick-action shortcuts: open the memory leak log, the git-identity
-  folder, or the thresholds config file.
+- Quick-action shortcuts: open the git-identity folder or the thresholds
+  config file.
 
 Thresholds are configurable at `~/.config/claude-sessions/config.json`
 (created automatically on first run) — use the "Edit thresholds config"

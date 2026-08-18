@@ -4,4 +4,4 @@
 
 [credential "https://github.com"]
 	helper =
-	helper = !/Users/achint/Developer/claude-session-monitor/git-identity/gh-credential-helper.sh achint-gupta-tech
+	helper = !/Users/achint/Developer/headroom/git-identity/gh-credential-helper.sh achint-gupta-tech

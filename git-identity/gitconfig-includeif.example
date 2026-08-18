@@ -2,7 +2,7 @@
 # per parent folder if several repos belong to the same account).
 # Trailing slash on the gitdir path is required.
 
-[includeIf "gitdir:~/Developer/claude-session-monitor/"]
+[includeIf "gitdir:~/Developer/headroom/"]
 	path = ~/.gitconfig-achint-gupta-tech
 
 # Example for another project under a different account — copy, rename
