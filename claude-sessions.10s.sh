@@ -106,7 +106,7 @@ echo "---"
 
 echo "Launch project"
 if [[ -f "$PROJECTS_FILE" ]]; then
-  while IFS='|' read -r name path; do
+  while IFS='|' read -r name path || [[ -n "$name" ]]; do
     [[ -z "$name" || "$name" == \#* ]] && continue
     name="$(echo "$name" | xargs)"
     path="$(echo "$path" | xargs)"

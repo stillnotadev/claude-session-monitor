@@ -22,7 +22,7 @@ if [[ ! -d "$dir" ]]; then
   exit 1
 fi
 
-tmp="$(mktemp /tmp/claude-launch.XXXXXX.sh)"
+tmp="$(mktemp /tmp/claude-launch.XXXXXX)"
 
 {
   echo "#!/bin/bash"
