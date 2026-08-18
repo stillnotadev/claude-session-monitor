@@ -17,10 +17,17 @@ account happens to be.
    client/account).
 2. Each block points at a small per-account config file that sets:
    - `user.name` / `user.email` — so commits are attributed correctly
-   - `credential.https://github.com.username` — this is the part that
-     actually fixes the auth problem. It tells `gh`'s credential helper
-     which of your logged-in accounts to hand over a token for, without
-     needing that account to be the "active" one.
+   - `credential.https://github.com.helper` — pointed at
+     `gh-credential-helper.sh`, a small wrapper around
+     `gh auth token --user <name>`. This is necessary because `gh`'s own
+     credential helper (`gh auth git-credential`) has a known bug
+     ([cli/cli#9111](https://github.com/cli/cli/issues/9111)): it ignores
+     the account username git asks for and always serves whichever
+     account is currently "active," so a naive `credential.username`
+     override doesn't actually work — git falls back to an interactive
+     password prompt instead. The wrapper script sidesteps this by calling
+     `gh auth token --user <name>` directly, which does correctly fetch a
+     specific non-active account's token.
 
 ## Setup
 
@@ -45,8 +52,8 @@ account happens to be.
    ```
    cp ~/.gitconfig-achint-gupta-tech ~/.gitconfig-corriente-app
    ```
-   then edit `user.name`, `user.email`, and
-   `credential.https://github.com.username` inside it to match.
+   then edit `user.name`, `user.email`, and the username argument passed
+   to `gh-credential-helper.sh` inside it to match that account.
 
 3. Append matching `includeIf` blocks to `~/.gitconfig` — see
    `gitconfig-includeif.example` in this folder for the exact syntax.

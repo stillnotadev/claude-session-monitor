@@ -3,4 +3,5 @@
 	email = achint-gupta-tech@users.noreply.github.com
 
 [credential "https://github.com"]
-	username = achint-gupta-tech
+	helper =
+	helper = !/Users/achint/Developer/claude-session-monitor/git-identity/gh-credential-helper.sh achint-gupta-tech
