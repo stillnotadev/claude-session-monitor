@@ -15,6 +15,8 @@ struct ContentView: View {
             Divider()
             recommendationBanner
             Divider()
+            topProcessesSection
+            Divider()
             quickActionsSection
         }
         .frame(width: 340)
@@ -162,6 +164,49 @@ struct ContentView: View {
         case .warning: return .orange
         case .critical: return .red
         }
+    }
+
+    // MARK: Top processes
+
+    private var topProcessesSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Using the most memory")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            if state.topProcesses.isEmpty {
+                Text("Nothing significant")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(state.topProcesses) { proc in
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(proc.name)
+                                .font(.caption.weight(.medium))
+                                .lineLimit(1)
+                            Text("\(formatted(proc.rssGB)) GB · pid \(proc.pid)")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Button {
+                            state.quitProcess(pid: proc.pid)
+                        } label: {
+                            Image(systemName: "xmark")
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.red)
+                    }
+                    .padding(8)
+                    .background(Color.gray.opacity(0.08))
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                }
+                Text("Quit sends a graceful signal — apps get a chance to save first.")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(12)
     }
 
     // MARK: Quick actions
