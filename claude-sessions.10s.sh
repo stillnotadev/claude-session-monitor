@@ -2,15 +2,14 @@
 #
 # SwiftBar plugin: Claude Code session monitor
 #
-# Shows current memory pressure / free RAM / CPU in the menu bar, lists
-# locally-running `claude` processes with a one-click kill, and gives you a
-# launch menu (local or cloud) for each project in your projects list.
+# Shows current memory pressure / free RAM / CPU in the menu bar, with a
+# one-line recommendation on whether to run new Claude Code sessions
+# locally or in the cloud based on current headroom.
 #
 # Install:
 #   1. Install SwiftBar: https://github.com/swiftbar/SwiftBar
-#   2. Copy this file AND claude-launch.sh into your SwiftBar plugin folder.
-#   3. chmod +x claude-sessions.10s.sh claude-launch.sh
-#   4. Create ~/.config/claude-sessions/projects.txt (see projects.txt.example).
+#   2. Copy this file into your SwiftBar plugin folder.
+#   3. chmod +x claude-sessions.10s.sh
 #
 # The "10s" in the filename is the SwiftBar refresh interval — change it if
 # you want to poll more or less often.
@@ -78,23 +77,5 @@ echo "Free: ${free_gb} GB / ${total_gb} GB"
 echo "CPU used: ${cpu_used}%"
 echo "---"
 echo "${recommend} | color=${rec_color}"
-echo "---"
-
-# ---------- running local sessions ----------
-
-echo "Running locally"
-proc_lines="$(ps -Ao pid,rss,comm | awk '$3 ~ /(^|\/)claude$/ {print $1, $2}')"
-
-if [[ -z "$proc_lines" ]]; then
-  echo "--No local sessions running | color=gray"
-else
-  while read -r pid rss; do
-    [[ -z "$pid" ]] && continue
-    rss_gb="$(awk -v r="$rss" 'BEGIN{printf "%.1f", r/1024/1024}')"
-    echo "--pid ${pid} · ${rss_gb} GB | color=gray"
-    echo "----Kill | bash='/bin/kill' param1='-9' param2='${pid}' terminal=false refresh=true color=red"
-  done <<< "$proc_lines"
-fi
-
 echo "---"
 echo "Refresh | refresh=true"
