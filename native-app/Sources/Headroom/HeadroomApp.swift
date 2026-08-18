@@ -11,7 +11,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 }
 
 @main
-struct ClaudeSessionMonitorApp: App {
+struct HeadroomApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var state = AppState()
 

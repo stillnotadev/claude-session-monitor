@@ -2,12 +2,12 @@
 import PackageDescription
 
 let package = Package(
-    name: "ClaudeSessionMonitor",
+    name: "Headroom",
     platforms: [.macOS(.v13)],
     targets: [
         .executableTarget(
-            name: "ClaudeSessionMonitor",
-            path: "Sources/ClaudeSessionMonitor"
+            name: "Headroom",
+            path: "Sources/Headroom"
         )
     ]
 )

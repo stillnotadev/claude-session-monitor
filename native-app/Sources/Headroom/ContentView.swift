@@ -4,7 +4,6 @@ import Foundation
 
 struct ContentView: View {
     @ObservedObject var state: AppState
-    @State private var taskDescription: String = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -16,10 +15,6 @@ struct ContentView: View {
             Divider()
             recommendationBanner
             Divider()
-            runningSection
-            Divider()
-            newSessionSection
-            Divider()
             quickActionsSection
         }
         .frame(width: 340)
@@ -30,9 +25,9 @@ struct ContentView: View {
 
     private var header: some View {
         HStack {
-            Image(systemName: "bolt.fill")
+            Image(systemName: "gauge")
                 .foregroundStyle(.blue)
-            Text("Claude sessions")
+            Text("Headroom")
                 .font(.headline)
             Spacer()
             Button {
@@ -169,73 +164,6 @@ struct ContentView: View {
         }
     }
 
-    // MARK: Running locally
-
-    private var runningSection: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Running locally (CLI only)")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            if state.runningProcesses.isEmpty {
-                Text("No local CLI sessions running")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            } else {
-                ForEach(state.runningProcesses) { proc in
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("pid \(proc.pid)")
-                                .font(.caption.weight(.medium))
-                            Text("\(formatted(proc.rssGB)) GB")
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        Button {
-                            state.killProcess(pid: proc.pid)
-                        } label: {
-                            Image(systemName: "xmark")
-                        }
-                        .buttonStyle(.plain)
-                        .foregroundStyle(.red)
-                    }
-                    .padding(8)
-                    .background(Color.gray.opacity(0.08))
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
-                }
-            }
-        }
-        .padding(12)
-    }
-
-    // MARK: New session
-
-    private var newSessionSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("New session")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            TextField("Fix the auth redirect bug", text: $taskDescription)
-                .textFieldStyle(.roundedBorder)
-            HStack(spacing: 8) {
-                Button {
-                    launchLocal()
-                } label: {
-                    Label("Run locally", systemImage: "desktopcomputer")
-                        .frame(maxWidth: .infinity)
-                }
-                Button {
-                    launchCloud()
-                } label: {
-                    Label("Run in cloud", systemImage: "cloud")
-                        .frame(maxWidth: .infinity)
-                }
-            }
-            .buttonStyle(.bordered)
-        }
-        .padding(12)
-    }
-
     // MARK: Quick actions
 
     private var quickActionsSection: some View {
@@ -252,29 +180,7 @@ struct ContentView: View {
         .padding(12)
     }
 
-    // MARK: Actions
-
-    private func launchLocal() {
-        guard let folder = pickFolder() else { return }
-        SessionLauncher.openLocal(folder: folder)
-    }
-
-    private func launchCloud() {
-        guard !taskDescription.trimmingCharacters(in: .whitespaces).isEmpty else { return }
-        guard let folder = pickFolder() else { return }
-        SessionLauncher.openCloud(folder: folder, description: taskDescription)
-        taskDescription = ""
-    }
-
-    private func pickFolder() -> String? {
-        let panel = NSOpenPanel()
-        panel.canChooseDirectories = true
-        panel.canChooseFiles = false
-        panel.allowsMultipleSelection = false
-        panel.message = "Choose the project folder for this session"
-        guard panel.runModal() == .OK, let url = panel.url else { return nil }
-        return url.path
-    }
+    // MARK: Formatting
 
     private func formatted(_ value: Double, decimals: Int = 1) -> String {
         String(format: "%.\(decimals)f", value)

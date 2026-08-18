@@ -6,7 +6,6 @@ final class AppState: ObservableObject {
 
     @Published var stats = SystemStats()
     @Published var recommendation = Recommendation(level: .normal, text: "Loading…")
-    @Published var runningProcesses: [RunningProcess] = []
     @Published var trend: Trend = .flat
 
     let config: Config
@@ -39,7 +38,7 @@ final class AppState: ObservableObject {
 
             if newRecommendation.level > previousLevel {
                 Notifier.send(
-                    title: "Claude sessions",
+                    title: "Headroom",
                     subtitle: "Memory pressure: \(newStats.pressure.label)",
                     body: "\(String(format: "%.1f", newStats.freeGB)) GB free — \(newRecommendation.text)"
                 )
@@ -52,11 +51,5 @@ final class AppState: ObservableObject {
 
         stats = newStats
         recommendation = newRecommendation
-        runningProcesses = ClaudeProcess.listRunning()
-    }
-
-    func killProcess(pid: Int32) {
-        ClaudeProcess.kill(pid: pid)
-        refresh()
     }
 }
