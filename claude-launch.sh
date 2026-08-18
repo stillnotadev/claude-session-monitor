@@ -44,7 +44,17 @@ fi
 
 # Cloud sessions still go through a Terminal — there's no documented
 # desktop deep link for `claude --cloud` yet, and it needs the unpushed
-# commit check below before it's worth starting.
+# commit check below before it's worth starting. `claude --cloud` also
+# requires a task description up front, so ask for one first.
+
+description="$(osascript -e 'text returned of (display dialog "Describe the task for this cloud session:" default answer "" with title "Claude — cloud session" buttons {"Cancel","Start"} default button "Start")' 2>/dev/null || true)"
+
+if [[ -z "$description" ]]; then
+  exit 0
+fi
+
+esc_description="$(printf '%q' "$description")"
+
 tmp="$(mktemp /tmp/claude-launch.XXXXXX)"
 
 {
@@ -63,8 +73,8 @@ else
   echo "Warning: this folder isn't a git repo. Cloud sessions require a pushed GitHub remote."
   echo
 fi
-exec claude --cloud
 EOS
+  echo "exec claude --cloud ${esc_description}"
 } > "$tmp"
 
 chmod +x "$tmp"

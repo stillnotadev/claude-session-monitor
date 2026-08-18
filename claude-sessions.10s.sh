@@ -15,10 +15,6 @@
 # The "10s" in the filename is the SwiftBar refresh interval — change it if
 # you want to poll more or less often.
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LAUNCHER="$SCRIPT_DIR/claude-launch.sh"
-PROJECTS_FILE="$HOME/.config/claude-sessions/projects.txt"
-
 # ---------- memory ----------
 
 vm_stat_out="$(vm_stat)"
@@ -101,24 +97,4 @@ else
 fi
 
 echo "---"
-
-# ---------- launch menu ----------
-
-echo "Launch project"
-if [[ -f "$PROJECTS_FILE" ]]; then
-  while IFS='|' read -r name path || [[ -n "$name" ]]; do
-    [[ -z "$name" || "$name" == \#* ]] && continue
-    name="$(echo "$name" | xargs)"
-    path="$(echo "$path" | xargs)"
-    echo "--${name}"
-    echo "----Run locally | bash='${LAUNCHER}' param1=local param2='${path}' terminal=false"
-    echo "----Run in cloud | bash='${LAUNCHER}' param1=cloud param2='${path}' terminal=false"
-  done < "$PROJECTS_FILE"
-else
-  echo "--No projects configured | color=gray"
-  echo "--Create ~/.config/claude-sessions/projects.txt | color=gray"
-fi
-
-echo "---"
-echo "Edit projects list | bash='/usr/bin/open' param1='-e' param2='${PROJECTS_FILE}' terminal=false"
 echo "Refresh | refresh=true"
