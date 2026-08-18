@@ -67,6 +67,28 @@ case "$pressure" in
   *)        recommend="Plenty of headroom — local is fine"; rec_color="green" ;;
 esac
 
+# ---------- crash-warning notification ----------
+# Fires a native notification only when pressure escalates (e.g. Normal ->
+# Warning), not on every refresh, so it doesn't spam you while sustained.
+
+rank() {
+  case "$1" in
+    Critical) echo 2 ;;
+    Warning)  echo 1 ;;
+    *)        echo 0 ;;
+  esac
+}
+
+STATE_DIR="$HOME/.config/claude-sessions"
+STATE_FILE="$STATE_DIR/last_pressure"
+mkdir -p "$STATE_DIR"
+last_pressure="$(cat "$STATE_FILE" 2>/dev/null || echo "Normal")"
+
+if [[ "$(rank "$pressure")" -gt "$(rank "$last_pressure")" ]]; then
+  osascript -e "display notification \"${free_gb} GB free — ${recommend}\" with title \"Claude sessions\" subtitle \"Memory pressure: ${pressure}\" sound name \"Basso\"" >/dev/null 2>&1
+fi
+echo "$pressure" > "$STATE_FILE"
+
 # ---------- menu bar line ----------
 
 echo "${free_gb}GB | sfimage=${sfimage}"
