@@ -4,6 +4,7 @@ import Foundation
 
 struct ContentView: View {
     @ObservedObject var state: AppState
+    @State private var launchAtLogin: Bool = LoginItem.isEnabled
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -15,7 +16,9 @@ struct ContentView: View {
             Divider()
             recommendationBanner
             Divider()
-            topProcessesSection
+            topMemorySection
+            Divider()
+            topCPUSection
             Divider()
             quickActionsSection
         }
@@ -166,31 +169,31 @@ struct ContentView: View {
         }
     }
 
-    // MARK: Top processes
+    // MARK: Top memory processes
 
-    private var topProcessesSection: some View {
+    private var topMemorySection: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Using the most memory")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            if state.topProcesses.isEmpty {
+            if state.topMemoryProcesses.isEmpty {
                 Text("Nothing significant")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(state.topProcesses) { proc in
+                ForEach(state.topMemoryProcesses) { proc in
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(proc.name)
                                 .font(.caption.weight(.medium))
                                 .lineLimit(1)
-                            Text("\(formatted(proc.rssGB)) GB · pid \(proc.pid)")
+                            Text("\(formatted(proc.totalRssGB)) GB" + (proc.count > 1 ? " · \(proc.count) processes" : ""))
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
                         Spacer()
                         Button {
-                            state.quitProcess(pid: proc.pid)
+                            state.quitProcessGroup(pids: proc.pids)
                         } label: {
                             Image(systemName: "xmark")
                         }
@@ -209,19 +212,66 @@ struct ContentView: View {
         .padding(12)
     }
 
+    // MARK: Top CPU processes
+
+    private var topCPUSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Using the most CPU")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            if state.topCPUProcesses.isEmpty {
+                Text("Nothing significant")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(state.topCPUProcesses) { proc in
+                    HStack {
+                        Text(proc.name)
+                            .font(.caption.weight(.medium))
+                            .lineLimit(1)
+                        Spacer()
+                        Text("\(formatted(proc.cpuPercent, decimals: 0))%")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        Button {
+                            state.quitProcess(pid: proc.pid)
+                        } label: {
+                            Image(systemName: "xmark")
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.red)
+                    }
+                    .padding(8)
+                    .background(Color.gray.opacity(0.08))
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                }
+            }
+        }
+        .padding(12)
+    }
+
     // MARK: Quick actions
 
     private var quickActionsSection: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Button("Open memory log") { QuickActions.openMemoryLog() }
-            Button("Open git identity folder") { QuickActions.openGitIdentityFolder() }
-            Button("Edit thresholds config") { QuickActions.openConfigFile() }
-            Divider()
-            Button("Quit") { NSApplication.shared.terminate(nil) }
+        VStack(alignment: .leading, spacing: 8) {
+            Toggle("Launch at login", isOn: $launchAtLogin)
+                .toggleStyle(.checkbox)
+                .font(.caption)
+                .foregroundStyle(.primary)
+                .onChange(of: launchAtLogin) { newValue in
+                    LoginItem.setEnabled(newValue)
+                }
+            VStack(alignment: .leading, spacing: 6) {
+                Button("Open memory log") { QuickActions.openMemoryLog() }
+                Button("Open git identity folder") { QuickActions.openGitIdentityFolder() }
+                Button("Edit thresholds config") { QuickActions.openConfigFile() }
+                Divider()
+                Button("Quit") { NSApplication.shared.terminate(nil) }
+            }
+            .buttonStyle(.plain)
+            .font(.caption)
+            .foregroundStyle(.blue)
         }
-        .buttonStyle(.plain)
-        .font(.caption)
-        .foregroundStyle(.blue)
         .padding(12)
     }
 

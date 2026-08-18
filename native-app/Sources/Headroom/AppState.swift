@@ -7,7 +7,8 @@ final class AppState: ObservableObject {
     @Published var stats = SystemStats()
     @Published var recommendation = Recommendation(level: .normal, text: "Loading…")
     @Published var trend: Trend = .flat
-    @Published var topProcesses: [TopProcess] = []
+    @Published var topMemoryProcesses: [GroupedProcess] = []
+    @Published var topCPUProcesses: [CPUProcess] = []
 
     let config: Config
 
@@ -52,11 +53,17 @@ final class AppState: ObservableObject {
 
         stats = newStats
         recommendation = newRecommendation
-        topProcesses = ProcessMonitor.topMemoryConsumers()
+        topMemoryProcesses = ProcessMonitor.topMemoryConsumers()
+        topCPUProcesses = ProcessMonitor.topCPUConsumers()
     }
 
     func quitProcess(pid: Int32) {
         ProcessMonitor.quit(pid: pid)
+        refresh()
+    }
+
+    func quitProcessGroup(pids: [Int32]) {
+        ProcessMonitor.quit(pids: pids)
         refresh()
     }
 }
