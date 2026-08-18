@@ -53,8 +53,8 @@ final class AppState: ObservableObject {
 
         stats = newStats
         recommendation = newRecommendation
-        topMemoryProcesses = ProcessMonitor.topMemoryConsumers()
-        topCPUProcesses = ProcessMonitor.topCPUConsumers()
+        topMemoryProcesses = ProcessMonitor.topMemoryConsumers(limit: 4)
+        topCPUProcesses = ProcessMonitor.topCPUConsumers(limit: 4)
     }
 
     func quitProcess(pid: Int32) {

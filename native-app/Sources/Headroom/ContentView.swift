@@ -2,27 +2,29 @@ import SwiftUI
 import AppKit
 import Foundation
 
+enum ProcessTab: String, CaseIterable {
+    case memory = "Memory"
+    case cpu = "CPU"
+}
+
 struct ContentView: View {
     @ObservedObject var state: AppState
     @State private var launchAtLogin: Bool = LoginItem.isEnabled
+    @State private var processTab: ProcessTab = .memory
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             header
             Divider()
-            memorySection
-            Divider()
-            environmentSection
+            statsRow
             Divider()
             recommendationBanner
             Divider()
-            topMemorySection
-            Divider()
-            topCPUSection
+            processSection
             Divider()
             quickActionsSection
         }
-        .frame(width: 340)
+        .frame(width: 300)
         .padding(.bottom, 8)
     }
 
@@ -45,42 +47,47 @@ struct ContentView: View {
         .padding(12)
     }
 
-    // MARK: Memory
+    // MARK: Compact stats row (memory + disk + battery + CPU in one line)
 
-    private var memorySection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("Memory pressure")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                trendIcon
+    private var statsRow: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
                 Text(state.stats.pressure.label)
-                    .font(.caption.weight(.semibold))
-                    .padding(.horizontal, 8)
+                    .font(.caption2.weight(.semibold))
+                    .padding(.horizontal, 7)
                     .padding(.vertical, 2)
                     .background(pressureColor.opacity(0.18))
                     .foregroundStyle(pressureColor)
                     .clipShape(Capsule())
-            }
-            ProgressView(value: memoryFraction)
-                .tint(pressureColor)
-            HStack {
-                Text("\(formatted(state.stats.freeGB)) GB free of \(state.stats.totalGB) GB")
+                trendIcon
                 Spacer()
+            }
+            HStack(spacing: 12) {
+                statItem(icon: "memorychip", text: "\(formatted(state.stats.freeGB)) GB")
+                statItem(icon: "internaldrive", text: "\(formatted(state.stats.diskFreeGB, decimals: 0)) GB")
+                if let pct = state.stats.batteryPercent {
+                    statItem(
+                        icon: state.stats.isOnACPower ? "powerplug" : "battery.100",
+                        text: "\(pct)%"
+                    )
+                }
                 if let cpu = state.stats.cpuUsedPercent {
-                    Label("\(cpu)%", systemImage: "cpu")
+                    statItem(icon: "cpu", text: "\(cpu)%")
                 }
             }
             .font(.caption)
             .foregroundStyle(.secondary)
+            if state.stats.thermalState != .nominal {
+                Label(thermalLabel, systemImage: "thermometer")
+                    .font(.caption2)
+                    .foregroundStyle(thermalColor)
+            }
         }
         .padding(12)
     }
 
-    private var memoryFraction: Double {
-        guard state.stats.totalGB > 0 else { return 0 }
-        return min(state.stats.freeGB / Double(state.stats.totalGB), 1)
+    private func statItem(icon: String, text: String) -> some View {
+        Label(text, systemImage: icon)
     }
 
     @ViewBuilder
@@ -101,30 +108,6 @@ struct ContentView: View {
         case .warning: return .orange
         case .critical: return .red
         }
-    }
-
-    // MARK: Disk / battery / thermal
-
-    private var environmentSection: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Label("\(formatted(state.stats.diskFreeGB, decimals: 0)) GB free disk", systemImage: "internaldrive")
-                Spacer()
-                if let pct = state.stats.batteryPercent {
-                    Label(
-                        "\(pct)%" + (state.stats.isOnACPower ? " · plugged in" : ""),
-                        systemImage: state.stats.isOnACPower ? "powerplug" : "battery.100"
-                    )
-                }
-            }
-            if state.stats.thermalState != .nominal {
-                Label(thermalLabel, systemImage: "thermometer")
-                    .foregroundStyle(thermalColor)
-            }
-        }
-        .font(.caption)
-        .foregroundStyle(.secondary)
-        .padding(12)
     }
 
     private var thermalLabel: String {
@@ -169,85 +152,95 @@ struct ContentView: View {
         }
     }
 
-    // MARK: Top memory processes
+    // MARK: Processes (segmented Memory / CPU, one list at a time)
 
-    private var topMemorySection: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Using the most memory")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            if state.topMemoryProcesses.isEmpty {
-                Text("Nothing significant")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            } else {
-                ForEach(state.topMemoryProcesses) { proc in
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(proc.name)
-                                .font(.caption.weight(.medium))
-                                .lineLimit(1)
-                            Text("\(formatted(proc.totalRssGB)) GB" + (proc.count > 1 ? " · \(proc.count) processes" : ""))
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        Button {
-                            state.quitProcessGroup(pids: proc.pids)
-                        } label: {
-                            Image(systemName: "xmark")
-                        }
-                        .buttonStyle(.plain)
-                        .foregroundStyle(.red)
-                    }
-                    .padding(8)
-                    .background(Color.gray.opacity(0.08))
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
+    private var processSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Picker("", selection: $processTab) {
+                ForEach(ProcessTab.allCases, id: \.self) { tab in
+                    Text(tab.rawValue).tag(tab)
                 }
-                Text("Quit sends a graceful signal — apps get a chance to save first.")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+
+            switch processTab {
+            case .memory:
+                memoryList
+            case .cpu:
+                cpuList
             }
         }
         .padding(12)
     }
 
-    // MARK: Top CPU processes
-
-    private var topCPUSection: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Using the most CPU")
+    @ViewBuilder
+    private var memoryList: some View {
+        if state.topMemoryProcesses.isEmpty {
+            Text("Nothing significant")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            if state.topCPUProcesses.isEmpty {
-                Text("Nothing significant")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            } else {
-                ForEach(state.topCPUProcesses) { proc in
-                    HStack {
-                        Text(proc.name)
-                            .font(.caption.weight(.medium))
-                            .lineLimit(1)
-                        Spacer()
-                        Text("\(formatted(proc.cpuPercent, decimals: 0))%")
+        } else {
+            ForEach(state.topMemoryProcesses) { proc in
+                HStack(spacing: 6) {
+                    Text(proc.name)
+                        .font(.caption)
+                        .lineLimit(1)
+                    if proc.count > 1 {
+                        Text("· \(proc.count)")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
-                        Button {
-                            state.quitProcess(pid: proc.pid)
-                        } label: {
-                            Image(systemName: "xmark")
-                        }
-                        .buttonStyle(.plain)
-                        .foregroundStyle(.red)
                     }
-                    .padding(8)
-                    .background(Color.gray.opacity(0.08))
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                    Spacer()
+                    Text("\(formatted(proc.totalRssGB)) GB")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Button {
+                        state.quitProcessGroup(pids: proc.pids)
+                    } label: {
+                        Image(systemName: "xmark")
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.red)
                 }
+                .padding(.vertical, 4)
+                .padding(.horizontal, 6)
+                .background(Color.gray.opacity(0.08))
+                .clipShape(RoundedRectangle(cornerRadius: 5))
             }
         }
-        .padding(12)
+    }
+
+    @ViewBuilder
+    private var cpuList: some View {
+        if state.topCPUProcesses.isEmpty {
+            Text("Nothing significant")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        } else {
+            ForEach(state.topCPUProcesses) { proc in
+                HStack(spacing: 6) {
+                    Text(proc.name)
+                        .font(.caption)
+                        .lineLimit(1)
+                    Spacer()
+                    Text("\(formatted(proc.cpuPercent, decimals: 0))%")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Button {
+                        state.quitProcess(pid: proc.pid)
+                    } label: {
+                        Image(systemName: "xmark")
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.red)
+                }
+                .padding(.vertical, 4)
+                .padding(.horizontal, 6)
+                .background(Color.gray.opacity(0.08))
+                .clipShape(RoundedRectangle(cornerRadius: 5))
+            }
+        }
     }
 
     // MARK: Quick actions
@@ -261,12 +254,12 @@ struct ContentView: View {
                 .onChange(of: launchAtLogin) { newValue in
                     LoginItem.setEnabled(newValue)
                 }
-            VStack(alignment: .leading, spacing: 6) {
-                Button("Open memory log") { QuickActions.openMemoryLog() }
-                Button("Open git identity folder") { QuickActions.openGitIdentityFolder() }
-                Button("Edit thresholds config") { QuickActions.openConfigFile() }
-                Divider()
+            HStack(spacing: 12) {
+                Button("Git identity") { QuickActions.openGitIdentityFolder() }
+                Button("Thresholds") { QuickActions.openConfigFile() }
+                Spacer()
                 Button("Quit") { NSApplication.shared.terminate(nil) }
+                    .foregroundStyle(.red)
             }
             .buttonStyle(.plain)
             .font(.caption)
