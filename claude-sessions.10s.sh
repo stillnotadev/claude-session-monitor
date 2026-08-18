@@ -70,7 +70,7 @@ esac
 
 # ---------- menu bar line ----------
 
-echo "${free_gb}GB | sfimage=${sfimage} color=${color}"
+echo "${free_gb}GB | sfimage=${sfimage}"
 echo "---"
 echo "Claude sessions | size=13"
 echo "Memory pressure: ${pressure} | color=${color}"
