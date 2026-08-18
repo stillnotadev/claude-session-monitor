@@ -22,13 +22,35 @@ if [[ ! -d "$dir" ]]; then
   exit 1
 fi
 
+urlencode() {
+  local string="$1" strlen=${#1} encoded="" pos c o
+  for (( pos=0; pos<strlen; pos++ )); do
+    c=${string:$pos:1}
+    case "$c" in
+      [a-zA-Z0-9.~_-]) o="$c" ;;
+      *) printf -v o '%%%02X' "'$c" ;;
+    esac
+    encoded+="$o"
+  done
+  printf '%s' "$encoded"
+}
+
+if [[ "$mode" == "local" ]]; then
+  # Open as a real session in the Claude desktop app instead of a bare
+  # Terminal window. See: https://support.claude.com/en/articles/14729294
+  open "claude://code/new?folder=$(urlencode "$dir")"
+  exit 0
+fi
+
+# Cloud sessions still go through a Terminal — there's no documented
+# desktop deep link for `claude --cloud` yet, and it needs the unpushed
+# commit check below before it's worth starting.
 tmp="$(mktemp /tmp/claude-launch.XXXXXX)"
 
 {
   echo "#!/bin/bash"
   echo "cd \"${dir}\" || exit 1"
-  if [[ "$mode" == "cloud" ]]; then
-    cat <<'EOS'
+  cat <<'EOS'
 if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   git fetch --quiet 2>/dev/null || true
   unpushed="$(git log @{u}.. --oneline 2>/dev/null || true)"
@@ -43,9 +65,6 @@ else
 fi
 exec claude --cloud
 EOS
-  else
-    echo "exec claude"
-  fi
 } > "$tmp"
 
 chmod +x "$tmp"
